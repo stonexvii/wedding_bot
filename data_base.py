@@ -44,11 +44,26 @@ class DataBase:
                 user_id     INTEGER, 
                 question_id INTEGER,
                 answer_id   INTEGER
-                    )''',
+                )''',
+            # '''CREATE TABLE IF NOT EXISTS questions (
+            #     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            #     user_id     INTEGER,
+            #     question_id INTEGER,
+            #     question    INTEGER,
+            #         )''',
+            # '''CREATE TABLE IF NOT EXISTS answers (
+            #     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            #     user_id     INTEGER,
+            #     question_id INTEGER,
+            #     answer_id   INTEGER
+            #         )''',
             '''CREATE TABLE IF NOT EXISTS images (
-                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                    photo_id    VARCHAR
-                    )''',
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     INTEGER,
+                photo_id    INTEGER,
+                photo_link  VARCHAR,
+                UNIQUE (user_id, photo_id)
+                )''',
         ]
         for sql in sqls:
             self.execute(sql, commit=True)
@@ -57,17 +72,18 @@ class DataBase:
         sql = '''INSERT INTO user_answers (user_id, question_id, answer_id) VALUES (?, ?, ?)'''
         self.execute(sql, (user_id, question_id, answer_id), commit=True)
 
-    def get_answers(self, user_id: int) -> tuple:
+    def get_user_answers_id(self, user_id: int) -> tuple:
         sql = '''SELECT question_id FROM user_answers WHERE user_id=?'''
         return self.execute(sql, (user_id,), fetchall=True)
 
-    def add_photo(self, photo_id: str):
-        sql = '''INSERT INTO images (photo_id) VALUES (?)'''
-        self.execute(sql, (photo_id,), commit=True)
+    def add_photo(self, user_id: int, photo_id: int, photo_link: str):
+        # sql = '''INSERT INTO images (photo_id) VALUES (?)'''
+        sql = '''INSERT or REPLACE INTO images VALUES (?, ?, ?, ?)'''
+        self.execute(sql, (None, user_id, photo_id, photo_link), commit=True)
 
-    def get_photo(self, photo_id: int) -> str:
-        sql = '''SELECT photo_id FROM images WHERE id=?'''
-        return self.execute(sql, (photo_id,), fetchone=True)[0]
+    def get_photo(self, user_id: int, photo_id: int) -> str:
+        sql = '''SELECT photo_link FROM images WHERE user_id=? AND photo_id=?'''
+        return self.execute(sql, (user_id, photo_id), fetchone=True)[0]
 
     # def delete(self, task_id: int):
     #     sql = '''DELETE FROM tasks WHERE task_id=?'''

@@ -1,7 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from classes import QuestData
-from questions import questions
+from classes import Question
+# from questions import questions
 from .callback_data import QuestionCB
 
 
@@ -17,15 +17,14 @@ def ikb_start():
     return keyboard.as_markup()
 
 
-def ikb_answers(current_question: int):
+def ikb_answers(question: Question):
     keyboard = InlineKeyboardBuilder()
-    answers = QuestData(questions)
-    for answer in answers.get_answers(current_question):
+    for answer in set(question.answers):
         keyboard.button(
             text=answer.text,
             callback_data=QuestionCB(
                 answer_id=answer.id,
-                question_id=current_question,
+                question_id=question.id,
             ),
         )
     keyboard.adjust(2, 2)
