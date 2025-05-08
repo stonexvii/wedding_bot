@@ -1,154 +1,59 @@
-import asyncpg
-
-from sqlalchemy import String, BigInteger, select, update, delete
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncAttrs, async_sessionmaker, create_async_engine
-
-import os
-
-from .tables import Base, QuestionsTable
-from classes.database import DBConfig
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .database import connection
-from .tables import QuestionsTable
+from .tables import AnswersTable, UserAnswers, QuestionsTable
 
 
 @connection
-async def add_question(session: AsyncSession, **kwargs):
-    session.add(QuestionsTable(**kwargs))
+async def add_question(question: str, session: AsyncSession):
+    session.add(QuestionsTable(question=question))
+    await session.commit()
+
+
+@connection
+async def add_answer(question_id: int, answer_id: int, answer: str, session: AsyncSession):
+    session.add(AnswersTable(
+        question_id=question_id,
+        answer_id=answer_id,
+        answer=answer,
+    ))
     await session.commit()
 
 
 @connection
 async def get_question(question_id: int, session: AsyncSession):
-    response = await session.scalar(select(QuestionsTable).where(QuestionsTable.id == question_id))
-    return response
-#
-#
-# @connection
-# async def get_users(session: AsyncSession):
-#     response = await session.scalars(select(User))
-#     return response.all()
+    question = await session.scalar(select(QuestionsTable).where(QuestionsTable.id == question_id))
+    if question:
+        answers = await session.scalars(
+            select(AnswersTable).where(AnswersTable.question_id == question_id))
+        return question, answers.all()
 
-# # @connection
-# # async def get_link(user_id: int, hashtag: int, channel_id: int, group_id: int, thread_id: int, session: AsyncSession):
-# #     session.add(LinkTable(
-# #         user_id=user_id,
-# #         hashtag=hashtag,
-# #         channel_id=channel_id,
-# #         group_id=group_id,
-# #         thread_id=thread_id,
-# #     ))
-# #     await session.commit()
-#
-# @connection
-# async def get_link(user_id: int, hashtag: int, channel_id: int, group_id: int, thread_id: int, session: AsyncSession):
-#     link = await session.scalar(select(LinkTable).where(
-#         LinkTable.user_id == user_id,
-#         LinkTable.hashtag == hashtag,
-#         LinkTable.channel_id == channel_id,
-#         LinkTable.group_id == group_id,
-#         LinkTable.thread_id == thread_id,
-#     ))
-#     return link
-#
-#
-# @connection
-# async def get_user(user_id: int, session: AsyncSession):
-#     response = await session.scalars(select(LinkTable).where(LinkTable.user_id == user_id))
-#     return response.all()
-#
-#
-# @connection
-# async def get_user_hashtags(user_id: int, session: AsyncSession):
-#     response = await session.scalars(select(LinkTable.hashtag).where(
-#         LinkTable.user_id == user_id,
-#     ))
-#     return response.all()
-#
-#
-# @connection
-# async def get_channel_hashtags(channel_id: int, session: AsyncSession):
-#     response = await session.scalars(select(LinkTable).where(LinkTable.channel_id == channel_id))
-#     return response.all()
-#
-#
-# @connection
-# async def get_group_links(user_id: int, group_id: int, thread_id: int, session: AsyncSession):
-#     response = await session.scalars(select(LinkTable).where(
-#         LinkTable.user_id == user_id,
-#         LinkTable.group_id == group_id,
-#         LinkTable.thread_id == thread_id,
-#     ))
-#     return response.all()
-#
-#
-# @connection
-# async def get_links_by_hashtag(user_id: int, hashtag: str, session: AsyncSession):
-#     response = await session.scalars(select(LinkTable).where(
-#         LinkTable.user_id == user_id,
-#         LinkTable.hashtag == hashtag,
-#
-#     ))
-#     return response.all()
-#
-#
-# #
-# #
-# # # @connection
-# # # async def unlink(group_id: int, thread_id: int, session: AsyncSession, hashtags: list[str] | None = None):
-# # #     if hashtags is None:
-# # #         query = await session.execute(select(LinkTable).where(
-# # #             LinkTable.group_id == group_id,
-# # #             LinkTable.thread_id == thread_id,
-# # #         ))
-# # #         links = query.scalars().all()
-# # #         for link in links:
-# # #             await session.delete(link)
-# # #     else:
-# # #         links = []
-# # #         for hashtag in hashtags:
-# # #             query = await session.execute(select(LinkTable).where(
-# # #                 LinkTable.group_id == group_id,
-# # #                 LinkTable.hashtag == hashtag,
-# # #                 LinkTable.thread_id == thread_id,
-# # #             ))
-# # #             links.append(query.scalar())
-# # #         for link in links:
-# # #             await session.delete(link)
-# # #     await session.commit()
-# #
-#
-#
-# # @connection
-# # async def unlink_group(group_id: int, thread_id: int, session: AsyncSession):
-# #     response = await session.scalars(select(LinkTable).where(
-# #         LinkTable.group_id == group_id,
-# #         LinkTable.thread_id == thread_id,
-# #     ))
-# #     for link in response.all():
-# #         await session.delete(link)
-# #     await session.commit()
-#
-#
-# @connection
-# async def unlink(link, session: AsyncSession):
-#     response = await session.scalar(select(LinkTable).where(
-#         LinkTable.user_id == link.user_id,
-#         LinkTable.hashtag == link.hashtag,
-#         LinkTable.channel_id == link.channel.id,
-#         LinkTable.group_id == link.group.id,
-#         LinkTable.thread_id == link.group.thread_id,
-#     ))
-#     await session.delete(response)
-#     await session.commit()
-# #
-# #
-# # @connection
-# # async def unlink_channel(channel_id: int, hashtag: str, session: AsyncSession):
-# #     response = await session.scalar(select(LinkTable).where(
-# #         LinkTable.channel_id == channel_id,
-# #         LinkTable.hashtag == hashtag,
-# #     ))
-# #     await session.delete(response)
-# #     await session.commit()
+
+@connection
+async def next_user_question_id(user_id: int, session: AsyncSession):
+    response = await session.scalars(select(UserAnswers.question_id).where(UserAnswers.user_id == user_id))
+    response = response.all()
+    return max(response) + 1 if response else 1
+
+
+@connection
+async def add_user_answer(user_id: int, question_id: int, answer_id: int, session: AsyncSession):
+    session.add(UserAnswers(
+        user_id=user_id,
+        question_id=question_id,
+        answer_id=answer_id,
+    ))
+    await session.commit()
+
+
+@connection
+async def all_questions(session: AsyncSession):
+    response = await session.scalars(select(QuestionsTable))
+    return response.all()
+
+
+@connection
+async def all_answers(session: AsyncSession):
+    response = await session.scalars(select(UserAnswers))
+    return response.all()

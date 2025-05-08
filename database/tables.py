@@ -1,9 +1,6 @@
-import asyncpg
-
-from sqlalchemy import String, BigInteger, Integer, select, update, delete, ForeignKey
+from sqlalchemy import String, BigInteger, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncAttrs, async_sessionmaker, create_async_engine
-
+from sqlalchemy.ext.asyncio import AsyncAttrs
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -15,18 +12,20 @@ class QuestionsTable(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     question: Mapped[str] = mapped_column(String(100))
-    answer_1: Mapped[str] = mapped_column(String(100), nullable=True)
-    answer_2: Mapped[str] = mapped_column(String(100), nullable=True)
-    answer_3: Mapped[str] = mapped_column(String(100), nullable=True)
-    answer_4: Mapped[str] = mapped_column(String(100), nullable=True)
-    answer_5: Mapped[str] = mapped_column(String(100), nullable=True)
-    answer_6: Mapped[str] = mapped_column(String(100), nullable=True)
 
 
 class AnswersTable(Base):
     __tablename__ = 'answers'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(BigInteger)
     question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
-    answer: Mapped[int] = mapped_column(Integer)
+    answer_id: Mapped[int] = mapped_column(Integer)
+    answer: Mapped[str] = mapped_column(String(100))
+
+
+class UserAnswers(Base):
+    __tablename__ = 'user_answers'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger)
+    question_id: Mapped[str] = mapped_column(Integer, ForeignKey('questions.id'))
+    answer_id: Mapped[int] = mapped_column(Integer)

@@ -1,15 +1,10 @@
+from aiogram import Bot, Dispatcher
+
 import os
 import asyncio
 
-from aiogram import Bot, Dispatcher
-
-import text
-
-from classes.classes import Question
-
 from database.database import create_tables
-from database.requests import get_question
-from handlers import main_router
+from handlers import handlers
 from misc import *
 
 
@@ -19,7 +14,7 @@ async def start_bot():
     await create_tables()
     dp.startup.register(on_start)
     dp.shutdown.register(on_shutdown)
-    dp.include_router(main_router)
+    dp.include_routers(*handlers)
     await dp.start_polling(bot)
 
 

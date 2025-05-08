@@ -1,31 +1,19 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from classes.classes import Question
-# from questions import questions
 from .callback_data import QuestionCB
-
-
-def ikb_start():
-    keyboard = InlineKeyboardBuilder()
-    keyboard.button(
-        text='Начать',
-        callback_data=QuestionCB(
-            answer_id=0,
-            question_id=0,
-        ),
-    )
-    return keyboard.as_markup()
 
 
 def ikb_answers(question: Question):
     keyboard = InlineKeyboardBuilder()
-    for answer in set(question.answers):
+    for answer in question:
         keyboard.button(
             text=answer.text,
             callback_data=QuestionCB(
-                answer_id=answer.id,
+                button='user_choice',
                 question_id=question.id,
+                answer_id=answer.id,
             ),
         )
-    keyboard.adjust(2, 2)
+    keyboard.adjust(1)
     return keyboard.as_markup()
