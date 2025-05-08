@@ -1,6 +1,6 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from classes import Question
+from classes.classes import Question
 # from questions import questions
 from .callback_data import QuestionCB
 

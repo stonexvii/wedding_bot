@@ -5,7 +5,7 @@ from aiogram.enums import ChatAction
 
 from random import choice
 
-from classes import TestData, User
+from classes.classes import TestData, User
 from data_base import DataBase
 from keyboards.callback_data import QuestionCB
 from keyboards.keyboards import ikb_start, ikb_answers
@@ -77,7 +77,7 @@ async def catch_user_answer(callback: CallbackQuery, callback_data: QuestionCB, 
         )
     else:
         photo = InputMediaPhoto(
-            media=test.photo,
+            media=test.finish_photo,
             caption=message_prefix + text.final_text,
         )
     await bot.edit_message_media(
