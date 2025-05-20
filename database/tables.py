@@ -10,8 +10,9 @@ class Base(AsyncAttrs, DeclarativeBase):
 class QuestionsTable(Base):
     __tablename__ = 'questions'
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     question: Mapped[str] = mapped_column(String(100))
+    video_id: Mapped[str] = mapped_column(String(300), nullable=True)
 
 
 class AnswersTable(Base):
@@ -23,9 +24,15 @@ class AnswersTable(Base):
     answer: Mapped[str] = mapped_column(String(100))
 
 
+class Users(Base):
+    __tablename__ = 'users'
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    username: Mapped[str] = mapped_column(String(100))
+
+
 class UserAnswers(Base):
     __tablename__ = 'user_answers'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(BigInteger)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'))
     question_id: Mapped[str] = mapped_column(Integer, ForeignKey('questions.id'))
     answer_id: Mapped[int] = mapped_column(Integer)

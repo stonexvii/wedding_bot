@@ -19,14 +19,17 @@ async def get_user_choice(callback: CallbackQuery, callback_data: QuestionCB, bo
     question_id = callback_data.question_id + 1
     question = await Question.from_db(question_id)
     if question:
-        message_text = question.text
-        keyboard = ikb_answers(question)
-    else:
-        message_text = 'Всё отлично! Ты приглашен!'
-        keyboard = None
-    await bot.send_message(
-        chat_id=callback.from_user.id,
-        text=message_text,
-        reply_markup=keyboard,
-
-    )
+        keyboard = ikb_answers(question=question)
+        if question.video_id:
+            await bot.send_video(
+                chat_id=callback.from_user.id,
+                video=question.video_id,
+                caption=question.text,
+                reply_markup=keyboard,
+            )
+        else:
+            await bot.send_message(
+                chat_id=callback.from_user.id,
+                text=question.text,
+                reply_markup=keyboard,
+            )

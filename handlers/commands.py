@@ -1,14 +1,15 @@
 from aiogram import Bot, Router
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.enums import MessageEntityType
 
 import pandas as pd
 
-from classes.classes import Question
-from database.requests import next_user_question_id, all_questions, all_answers
+from classes.classes import Question, User
+from database.requests import all_questions, all_answers, add_new_question
 from keyboards.keyboards import ikb_answers
-
+from .fsm_states import NewQuestion
 from e_sender.email_sender import send_mail
 
 import config
@@ -22,18 +23,41 @@ async def command_start(message: Message, bot: Bot):
         chat_id=message.from_user.id,
         message_id=message.message_id,
     )
-    question_id = await next_user_question_id(message.from_user.id)
-    question = await Question.from_db(question_id)
+    user = await User.from_db(message)
+    next_question_id = await user.next_question_id
+    question = await Question.from_db(next_question_id)
     if question:
-        message_text = question.text
-        keyboard = ikb_answers(question)
-    else:
-        message_text = 'ТЫ УЖЕ ПРИГЛАШЕН! ЗАЕБАЛ!'
-        keyboard = None
+        keyboard = ikb_answers(question=question)
+        if question.video_id:
+            await bot.send_video(
+                chat_id=message.from_user.id,
+                video=question.video_id,
+                caption=question.text,
+                reply_markup=keyboard,
+            )
+        else:
+            await bot.send_message(
+                chat_id=message.from_user.id,
+                text=question.text,
+                reply_markup=keyboard,
+            )
+
+
+@command_router.message(Command('add'))
+async def command_add(message: Message, state: FSMContext):
     await message.answer(
-        text=message_text,
-        reply_markup=keyboard,
+        text='Пришли вопрос и ответы'
     )
+    await state.set_state(NewQuestion.question_catch)
+
+
+@command_router.message(NewQuestion.question_catch)
+async def new_question(message: Message, state: FSMContext):
+    msg = message.caption if message.video else message.text
+    question_id, question, *answers = msg.split('\n')
+    video_id = message.video.file_id if message.video else None
+    await add_new_question(int(question_id), question, answers, video_id)
+    await state.clear()
 
 
 async def create_static_file():

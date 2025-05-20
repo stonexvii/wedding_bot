@@ -1,24 +1,34 @@
+from aiogram.types import Message
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .database import connection
-from .tables import AnswersTable, UserAnswers, QuestionsTable
+from .tables import AnswersTable, QuestionsTable, Users, UserAnswers
+
 
 
 @connection
-async def add_question(question: str, session: AsyncSession):
-    session.add(QuestionsTable(question=question))
+async def add_new_question(question_id: int, question: str, answers: list[str], video_id: str | None,
+                           session: AsyncSession):
+    question_obj = QuestionsTable(id=question_id, question=question, video_id=video_id)
+    session.add(question_obj)
+    await session.commit()
+    answers = [AnswersTable(question_id=question_id, answer_id=answer_id, answer=answer) for answer_id, answer in
+               enumerate(answers, 1)]
+    session.add_all(answers)
     await session.commit()
 
 
 @connection
-async def add_answer(question_id: int, answer_id: int, answer: str, session: AsyncSession):
-    session.add(AnswersTable(
-        question_id=question_id,
-        answer_id=answer_id,
-        answer=answer,
-    ))
-    await session.commit()
+async def get_user(message: Message, session: AsyncSession):
+    user = await session.scalar(select(Users).where(Users.id == message.from_user.id))
+    if not user:
+        user = Users(id=message.from_user.id, username=message.from_user.username)
+        session.add(user)
+        await session.commit()
+        user = await session.scalar(select(Users).where(Users.id == message.from_user.id))
+    return user
 
 
 @connection
@@ -31,8 +41,8 @@ async def get_question(question_id: int, session: AsyncSession):
 
 
 @connection
-async def next_user_question_id(user_id: int, session: AsyncSession):
-    response = await session.scalars(select(UserAnswers.question_id).where(UserAnswers.user_id == user_id))
+async def user_next_question_id(user_tg_id: int, session: AsyncSession):
+    response = await session.scalars(select(UserAnswers.question_id).where(UserAnswers.user_id == user_tg_id))
     response = response.all()
     return max(response) + 1 if response else 1
 
