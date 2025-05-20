@@ -4,3 +4,4 @@ def on_start():
 
 def on_shutdown():
     print('Bot is shutdown...')
+

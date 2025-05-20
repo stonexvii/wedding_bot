@@ -1,15 +1,15 @@
 from aiogram import Bot, Dispatcher
 
-import os
 import asyncio
 
+import config
 from database.database import create_tables
 from handlers import handlers
 from misc import *
 
 
 async def start_bot():
-    bot = Bot(token=os.getenv('BOT_TOKEN'))
+    bot = Bot(config.BOT_TOKEN)
     dp = Dispatcher()
     await create_tables()
     dp.startup.register(on_start)

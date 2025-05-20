@@ -1,12 +1,17 @@
-from aiogram import Bot, Router, F
+from aiogram import Bot, Router
 from aiogram.filters import Command
 from aiogram.types import Message
+from aiogram.enums import MessageEntityType
 
 import pandas as pd
 
 from classes.classes import Question
 from database.requests import next_user_question_id, all_questions, all_answers
 from keyboards.keyboards import ikb_answers
+
+from e_sender.email_sender import send_mail
+
+import config
 
 command_router = Router()
 
@@ -31,8 +36,7 @@ async def command_start(message: Message, bot: Bot):
     )
 
 
-@command_router.message(Command('statistic'))
-async def command_statistic(message: Message):
+async def create_static_file():
     statistic = {}
     questions = await all_questions()
     questions_data = [await Question.from_db(question.id) for question in questions]
@@ -44,17 +48,6 @@ async def command_statistic(message: Message):
     for entry in result:
         statistic[entry.question_id][entry.answer_id] += 1
         statistic[entry.question_id]['total'] += 1
-    # message_text = ''
-    # for question, answers in statistic.items():
-    #     current_question = answers['question']
-    #     message_text += f'{current_question}\n'
-    #     for answer_id, answer in answers.items():
-    #         if isinstance(answer_id, int):
-    #             message_text += f'{str(current_question.answers[answer_id])}\t\t\t\t\t{round(answer / answers['total']*100,2)}%\n'
-    #     message_text += '\n\n'
-    # await message.answer(
-    #     text=message_text,
-    # )
     file_data = {1: [], 2: []}
     for question, answers in statistic.items():
 
@@ -71,6 +64,16 @@ async def command_statistic(message: Message):
         file_data[2].append('')
 
     df = pd.DataFrame(file_data)
-    df.to_excel('statistic.xlsx', index=False)
+    df.to_excel(config.FILE_NAME_STATIC, index=False)
 
-    print(*file_data, sep='\n')
+
+@command_router.message(Command('send'))
+async def send_command(message: Message):
+    await create_static_file()
+    for entity in message.entities:
+        if entity.type == MessageEntityType.EMAIL:
+            email_address = entity.extract_from(message.text)
+            if send_mail(email_address):
+                await message.answer(
+                    text=f'Статистика отправлена по адресу {entity.extract_from(message.text)}',
+                )
