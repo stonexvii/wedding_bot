@@ -43,8 +43,7 @@ async def get_question(question_id: int, session: AsyncSession):
 @connection
 async def user_next_question_id(user_tg_id: int, session: AsyncSession):
     response = await session.scalars(select(UserAnswers.question_id).where(UserAnswers.user_id == user_tg_id))
-    response = response.all()
-    return max(response) + 1 if response else 1
+    return response.all()
 
 
 @connection
