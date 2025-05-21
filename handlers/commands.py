@@ -7,9 +7,9 @@ from aiogram.enums import MessageEntityType
 import pandas as pd
 
 from classes.classes import Question, User
-from database.requests import all_questions, all_answers, add_new_question
+from database.requests import all_questions, all_answers, add_new_question, all_users, user_answers
 from keyboards.keyboards import ikb_answers
-from .fsm_states import NewQuestion
+from .fsm_states import NewQuestion, StartTest
 from e_sender.email_sender import send_mail
 
 import config
@@ -17,8 +17,16 @@ import config
 command_router = Router()
 
 
+@command_router.message(StartTest.wait_question)
+async def message_cleaner(message: Message, bot: Bot):
+    await bot.delete_message(
+        chat_id=message.from_user.id,
+        message_id=message.message_id,
+    )
+
+
 @command_router.message(Command('start'))
-async def command_start(message: Message, bot: Bot):
+async def command_start(message: Message, bot: Bot, state: FSMContext):
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=message.message_id,
@@ -27,6 +35,7 @@ async def command_start(message: Message, bot: Bot):
     next_question_id = await user.next_question_id
     question = await Question.from_db(next_question_id)
     if question:
+        await state.set_state(StartTest.wait_question)
         keyboard = ikb_answers(question=question)
         if question.video_id:
             await bot.send_video(
@@ -54,8 +63,12 @@ async def command_add(message: Message, state: FSMContext):
 @command_router.message(NewQuestion.question_catch)
 async def new_question(message: Message, state: FSMContext):
     msg = message.caption if message.video else message.text
-    question_id, question, *answers = msg.split('\n')
-    video_id = message.video.file_id if message.video else None
+    if not (msg.startswith('0') or msg.startswith('100')):
+        question_id, question, *answers = msg.split('\n')
+        video_id = message.video.file_id if message.video else None
+    else:
+        question_id, question, *answers = msg.split('\n', 1)
+        video_id = message.video.file_id if message.video else None
     await add_new_question(int(question_id), question, answers, video_id)
     await state.clear()
 
@@ -63,24 +76,23 @@ async def new_question(message: Message, state: FSMContext):
 async def create_static_file():
     statistic = {}
     questions = await all_questions()
-    questions_data = [await Question.from_db(question.id) for question in questions]
+    questions_data = [await Question.from_db(question.id) for question in questions if question.id]
     for question in questions_data:
         statistic[question.id] = {answer: 0 for answer in question.answers}
         statistic[question.id]['total'] = 0
         statistic[question.id]['question']: Question = question
     result = await all_answers()
     for entry in result:
-        statistic[entry.question_id][entry.answer_id] += 1
-        statistic[entry.question_id]['total'] += 1
+        if entry.question_id:
+            statistic[entry.question_id][entry.answer_id] += 1
+            statistic[entry.question_id]['total'] += 1
     file_data = {1: [], 2: []}
     for question, answers in statistic.items():
-
         current_question = answers['question']
         file_data[1].append(str(current_question))
         file_data[2].append('')
 
         for answer_id, answer in answers.items():
-            row = []
             if isinstance(answer_id, int):
                 file_data[1].append(str(current_question.answers[answer_id]))
                 file_data[2].append(f'{round(answer / answers['total'] * 100, 2)}%')
@@ -101,3 +113,17 @@ async def send_command(message: Message):
                 await message.answer(
                     text=f'Статистика отправлена по адресу {entity.extract_from(message.text)}',
                 )
+
+
+@command_router.message(Command('statistics'))
+async def statistics_command(message: Message):
+    result = ''
+    questions = await all_questions()
+    users = await all_users()
+    for user in users:
+        result += f'@{user.username}  -  '
+        count = await user_answers(user_tg_id=user.id)
+        result += f'{len(count)}/{len(questions) - 2}\n'
+    await message.answer(
+        text=result,
+    )

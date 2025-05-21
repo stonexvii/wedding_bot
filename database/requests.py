@@ -7,7 +7,6 @@ from .database import connection
 from .tables import AnswersTable, QuestionsTable, Users, UserAnswers
 
 
-
 @connection
 async def add_new_question(question_id: int, question: str, answers: list[str], video_id: str | None,
                            session: AsyncSession):
@@ -54,6 +53,18 @@ async def add_user_answer(user_id: int, question_id: int, answer_id: int, sessio
         answer_id=answer_id,
     ))
     await session.commit()
+
+
+@connection
+async def user_answers(user_tg_id: int, session: AsyncSession):
+    response = await session.scalars(select(UserAnswers.id).where(UserAnswers.user_id == user_tg_id))
+    return response.all()
+
+
+@connection
+async def all_users(session: AsyncSession):
+    response = await session.scalars(select(Users))
+    return response.all()
 
 
 @connection

@@ -53,7 +53,7 @@ class User:
     @property
     async def next_question_id(self):
         response = await user_next_question_id(self.tg_id)
-        return max(response) + 1 if response else response
+        return max(response) + 1 if response else 0
 
     def __str__(self):
         return f'{self.tg_id} ({self.username})'

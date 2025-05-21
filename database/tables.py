@@ -11,7 +11,7 @@ class QuestionsTable(Base):
     __tablename__ = 'questions'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    question: Mapped[str] = mapped_column(String(100))
+    question: Mapped[str] = mapped_column(String(900))
     video_id: Mapped[str] = mapped_column(String(300), nullable=True)
 
 
