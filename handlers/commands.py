@@ -106,13 +106,14 @@ async def create_static_file():
 @command_router.message(Command('send'))
 async def send_command(message: Message):
     await create_static_file()
-    for entity in message.entities:
-        if entity.type == MessageEntityType.EMAIL:
-            email_address = entity.extract_from(message.text)
-            if send_mail(email_address):
-                await message.answer(
-                    text=f'Статистика отправлена по адресу {entity.extract_from(message.text)}',
-                )
+    if message.entities:
+        for entity in message.entities:
+            if entity.type == MessageEntityType.EMAIL:
+                email_address = entity.extract_from(message.text)
+                if send_mail(email_address):
+                    await message.answer(
+                        text=f'Статистика отправлена по адресу {entity.extract_from(message.text)}',
+                    )
 
 
 @command_router.message(Command('statistics'))
