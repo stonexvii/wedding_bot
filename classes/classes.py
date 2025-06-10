@@ -21,7 +21,7 @@ class Question:
         self.text = question.question
         self.video_id = question.video_id
         self.answers = {answer.answer_id: Answer(answer.answer_id, answer.answer) for answer in
-                        sorted(answers, key=lambda x: x.id)}
+                        sorted(answers, key=lambda x: x.id, reverse=True)}
 
     @classmethod
     async def from_db(cls, question_id: int):
