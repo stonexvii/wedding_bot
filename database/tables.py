@@ -33,6 +33,6 @@ class Users(Base):
 class UserAnswers(Base):
     __tablename__ = 'user_answers'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'))
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.id'))
     question_id: Mapped[str] = mapped_column(Integer, ForeignKey('questions.id'))
     answer_id: Mapped[int] = mapped_column(Integer)
