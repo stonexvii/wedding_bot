@@ -153,3 +153,10 @@ async def intro_message(message: Message, command: CommandObject):
 @command_router.message(Command('outro'))
 async def intro_message(message: Message, command: CommandObject):
     misc.save_message('outro', command.args)
+
+
+@command_router.message(Command('test'))
+async def intro_message(message: Message, command: CommandObject):
+    await message.answer(
+        text='WORK!',
+    )
