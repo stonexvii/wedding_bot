@@ -18,7 +18,7 @@ class Question:
 
     def __init__(self, question: QuestionsTable, answers: list[AnswersTable]):
         self.id = question.id
-        self.text = question.question
+        self.text = f'Вопрос {self.id}/10\n{question.question}'
         self.video_id = question.video_id
         self.answers = {answer.answer_id: Answer(answer.answer_id, answer.answer) for answer in
                         sorted(answers, key=lambda x: x.id, reverse=True)}

@@ -29,17 +29,15 @@ async def message_cleaner(message: Message, bot: Bot):
 
 @command_router.message(Command('start'))
 async def command_start(message: Message, bot: Bot, state: FSMContext):
-
     user = await User.from_db(message)
     next_question_id = await user.next_question_id
     question = await Question.from_db(next_question_id)
-    if not question.id:
+    if question and not question.id or not question:
         question.text = misc.load_message('intro')
-    else:
-        await bot.delete_message(
-            chat_id=message.from_user.id,
-            message_id=message.message_id,
-        )
+    await bot.delete_message(
+        chat_id=message.from_user.id,
+        message_id=message.message_id,
+    )
     if question:
         await state.set_state(StartTest.wait_question)
         keyboard = ikb_answers(question=question)
