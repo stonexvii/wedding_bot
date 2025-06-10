@@ -10,6 +10,7 @@ from classes.classes import Question, User
 from database.requests import all_questions, all_answers, add_new_question, all_users, user_answers, \
     collect_user_answers
 from keyboards.keyboards import ikb_answers
+import misc
 from .fsm_states import NewQuestion, StartTest
 from e_sender.email_sender import send_mail
 
@@ -35,6 +36,8 @@ async def command_start(message: Message, bot: Bot, state: FSMContext):
     user = await User.from_db(message)
     next_question_id = await user.next_question_id
     question = await Question.from_db(next_question_id)
+    if not question.id:
+        question.text = misc.load_message('intro')
     if question:
         await state.set_state(StartTest.wait_question)
         keyboard = ikb_answers(question=question)
@@ -140,3 +143,13 @@ async def collect_user_answers_handler(message: Message, command: CommandObject)
         await message.answer(
             text=message_text,
         )
+
+
+@command_router.message(Command('intro'))
+async def intro_message(message: Message, command: CommandObject):
+    misc.save_message('intro', command.args)
+
+
+@command_router.message(Command('outro'))
+async def intro_message(message: Message, command: CommandObject):
+    misc.save_message('outro', command.args)

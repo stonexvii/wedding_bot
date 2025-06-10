@@ -6,6 +6,7 @@ from classes.classes import Question
 from database.requests import add_user_answer
 from keyboards.keyboards import ikb_answers
 from keyboards.callback_data import QuestionCB
+import misc
 from .fsm_states import StartTest
 
 callback_router = Router()
@@ -23,6 +24,7 @@ async def get_user_choice(callback: CallbackQuery, callback_data: QuestionCB, bo
     question = await Question.from_db(question_id)
     if not question:
         question = await Question.from_db(100)
+        question.text = misc.load_message('outro')
         await state.clear()
     keyboard = ikb_answers(question=question)
     if question.video_id:
