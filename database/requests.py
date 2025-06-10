@@ -1,10 +1,29 @@
 from aiogram.types import Message
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from .database import connection
-from .tables import AnswersTable, QuestionsTable, Users, UserAnswers
+from .db_engine import async_session, engine
+from .tables import Base, AnswersTable, QuestionsTable, Users, UserAnswers
+
+
+def connection(function):
+    async def wrapper(*args, **kwargs):
+        async with async_session() as session:
+            try:
+                return await function(*args, session=session, **kwargs)
+            except Exception as e:
+                await session.rollback()
+                raise e
+            finally:
+                await session.close()
+
+    return wrapper
+
+
+async def create_tables():
+    async with engine.begin() as connect:
+        await connect.run_sync(Base.metadata.create_all)
 
 
 @connection
@@ -23,7 +42,7 @@ async def add_new_question(question_id: int, question: str, answers: list[str], 
 async def get_user(message: Message, session: AsyncSession):
     user = await session.scalar(select(Users).where(Users.id == message.from_user.id))
     if not user:
-        user = Users(id=message.from_user.id, username=message.from_user.username)
+        user = Users(id=message.from_user.id, username=message.from_user.username.lower())
         session.add(user)
         await session.commit()
         user = await session.scalar(select(Users).where(Users.id == message.from_user.id))
@@ -37,6 +56,13 @@ async def get_question(question_id: int, session: AsyncSession):
         answers = await session.scalars(
             select(AnswersTable).where(AnswersTable.question_id == question_id))
         return question, answers.all()
+
+
+@connection
+async def get_answer(question_id: int, answer_id: int, session: AsyncSession):
+    response = await session.scalar(
+        select(AnswersTable).where(AnswersTable.question_id == question_id, AnswersTable.answer_id == answer_id))
+    return response
 
 
 @connection
@@ -77,3 +103,15 @@ async def all_questions(session: AsyncSession):
 async def all_answers(session: AsyncSession):
     response = await session.scalars(select(UserAnswers))
     return response.all()
+
+
+@connection
+async def collect_user_answers(username: str, session: AsyncSession):
+    result = []
+    user_id = await session.scalar(select(Users.id).where(Users.username == username.lower()))
+    response = await session.scalars(select(UserAnswers).where(UserAnswers.user_id == user_id))
+    for current_answer in response.all():
+        question = await get_question(current_answer.question_id)
+        answer = await get_answer(current_answer.question_id, current_answer.answer_id)
+        result.append((question[0].question, answer.answer))
+    return result

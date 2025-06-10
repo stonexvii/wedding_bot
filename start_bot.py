@@ -3,7 +3,7 @@ from aiogram import Bot, Dispatcher
 import asyncio
 
 import config
-from database.database import create_tables
+from database import create_tables
 from handlers import handlers
 from misc import *
 

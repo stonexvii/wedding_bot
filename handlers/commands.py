@@ -1,5 +1,5 @@
 from aiogram import Bot, Router
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.enums import MessageEntityType
@@ -7,7 +7,8 @@ from aiogram.enums import MessageEntityType
 import pandas as pd
 
 from classes.classes import Question, User
-from database.requests import all_questions, all_answers, add_new_question, all_users, user_answers
+from database.requests import all_questions, all_answers, add_new_question, all_users, user_answers, \
+    collect_user_answers
 from keyboards.keyboards import ikb_answers
 from .fsm_states import NewQuestion, StartTest
 from e_sender.email_sender import send_mail
@@ -128,3 +129,14 @@ async def statistics_command(message: Message):
     await message.answer(
         text=result,
     )
+
+
+@command_router.message(Command('collect'))
+async def collect_user_answers_handler(message: Message, command: CommandObject):
+    if command.args:
+        response = await collect_user_answers(command.args)
+        message_text = f'Ответы пользователя {command.args}\n'
+        message_text += '\n\n'.join(['\n'.join(answer) for answer in response])
+        await message.answer(
+            text=message_text,
+        )

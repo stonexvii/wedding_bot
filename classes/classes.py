@@ -29,13 +29,13 @@ class Question:
         if response:
             return cls(*response)
 
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.answers:
-            return self.answers.popitem()[1]
-        raise StopIteration
+    # def __iter__(self):
+    #     return self
+    #
+    # def __next__(self) -> Answer:
+    #     if self.answers:
+    #         return self.answers.popitem()[1]
+    #     raise StopIteration
 
     def __str__(self):
         return self.text

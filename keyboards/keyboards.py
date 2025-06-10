@@ -13,8 +13,7 @@ text_buttons = [
 
 def ikb_answers(question: Question):
     keyboard = InlineKeyboardBuilder()
-    # if question.id:
-    for idx, answer in enumerate(question):
+    for idx, answer in enumerate(question.answers):
         keyboard.button(
             text=text_buttons[idx] if question.id else answer.text,
             callback_data=QuestionCB(
@@ -23,14 +22,5 @@ def ikb_answers(question: Question):
                 answer_id=answer.id,
             ),
         )
-    # else:
-    #     keyboard.button(
-    #         text='Начать',
-    #         callback_data=QuestionCB(
-    #             button='user_choice',
-    #             question_id=0,
-    #             answer_id=0,
-    #         ),
-    #     )
     keyboard.adjust(4)
     return keyboard.as_markup()
