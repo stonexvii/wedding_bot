@@ -125,6 +125,8 @@ async def statistics_command(message: Message):
     result = ''
     questions = await all_questions()
     users = await all_users()
+    print('DEBUG')
+    print(users)
     for user in users:
         result += f'@{user.username}  -  '
         count = await user_answers(user_tg_id=user.id)
