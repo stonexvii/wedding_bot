@@ -42,7 +42,7 @@ async def add_new_question(question_id: int, question: str, answers: list[str], 
 async def get_user(message: Message, session: AsyncSession):
     user = await session.scalar(select(Users).where(Users.id == message.from_user.id))
     if not user:
-        user = Users(id=message.from_user.id, username=message.from_user.username.lower())
+        user = Users(id=message.from_user.id, username=message.from_user.username.lower() if message.from_user.username else None)
         session.add(user)
         await session.commit()
         user = await session.scalar(select(Users).where(Users.id == message.from_user.id))
