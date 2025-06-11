@@ -35,4 +35,11 @@ def ikb_confirm_user_clear(user_tg_id: int):
             user_id=user_tg_id,
         )
     )
+    keyboard.button(
+        text='Отменить',
+        callback_data=ResetConfirm(
+            button='cancel',
+            user_id=user_tg_id,
+        )
+    )
     return keyboard.as_markup()
