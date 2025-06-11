@@ -3,6 +3,7 @@ from aiogram.types import Message
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+import config
 from .db_engine import async_session, engine
 from .tables import Base, AnswersTable, QuestionsTable, Users, UserAnswers
 
@@ -42,7 +43,8 @@ async def add_new_question(question_id: int, question: str, answers: list[str], 
 async def get_user(message: Message, session: AsyncSession):
     user = await session.scalar(select(Users).where(Users.id == message.from_user.id))
     if not user:
-        user = Users(id=message.from_user.id, username=message.from_user.username.lower() if message.from_user.username else None)
+        user_name = message.from_user.username.lower() if message.from_user.username else None
+        user = Users(id=message.from_user.id, username=user_name)
         session.add(user)
         await session.commit()
         user = await session.scalar(select(Users).where(Users.id == message.from_user.id))
@@ -115,3 +117,15 @@ async def collect_user_answers(username: str, session: AsyncSession):
         answer = await get_answer(current_answer.question_id, current_answer.answer_id)
         result.append((question[0].question, answer.answer))
     return result
+
+
+@connection
+async def destruction_of_the_user(admin_tg_id: int, user_tg_id: int, session: AsyncSession):
+    if admin_tg_id == config.ADMIN_TG_ID:
+        user_all_answers = await session.scalars(select(UserAnswers).where(UserAnswers.user_id == user_tg_id))
+        for answer in user_all_answers.all():
+            await session.delete(answer)
+        await session.commit()
+        user = await session.scalar(select(Users).where(Users.id == user_tg_id))
+        await session.delete(user)
+        await session.commit()

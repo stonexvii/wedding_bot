@@ -8,8 +8,8 @@ import pandas as pd
 
 from classes.classes import Question, User
 from database.requests import all_questions, all_answers, add_new_question, all_users, user_answers, \
-    collect_user_answers
-from keyboards.keyboards import ikb_answers
+    collect_user_answers, destruction_of_the_user
+from keyboards.keyboards import ikb_answers, ikb_confirm_user_clear
 import misc
 from .fsm_states import NewQuestion, StartTest
 from e_sender.email_sender import send_mail
@@ -32,13 +32,9 @@ async def command_start(message: Message, bot: Bot, state: FSMContext):
     user = await User.from_db(message)
     next_question_id = await user.next_question_id
     question = await Question.from_db(next_question_id)
-    if question and not question.id or not question:
-        question.text = misc.load_message('intro')
-    await bot.delete_message(
-        chat_id=message.from_user.id,
-        message_id=message.message_id,
-    )
     if question:
+        if not next_question_id:
+            question.text = misc.load_message('intro')
         await state.set_state(StartTest.wait_question)
         keyboard = ikb_answers(question=question)
         if question.video_id:
@@ -59,7 +55,7 @@ async def command_start(message: Message, bot: Bot, state: FSMContext):
 @command_router.message(Command('add'))
 async def command_add(message: Message, state: FSMContext):
     await message.answer(
-        text='Пришли вопрос и ответы'
+        text='Пришли вопрос и ответы',
     )
     await state.set_state(NewQuestion.question_catch)
 
@@ -125,8 +121,6 @@ async def statistics_command(message: Message):
     result = ''
     questions = await all_questions()
     users = await all_users()
-    print('DEBUG')
-    print(users)
     for user in users:
         result += f'@{user.username}  -  '
         count = await user_answers(user_tg_id=user.id)
@@ -144,6 +138,27 @@ async def collect_user_answers_handler(message: Message, command: CommandObject)
         message_text += '\n\n'.join(['\n'.join(answer) for answer in response])
         await message.answer(
             text=message_text,
+        )
+
+
+@command_router.message(Command('get_id'))
+async def get_user_id(message: Message):
+    await message.answer(
+        text=str(message.from_user.id),
+    )
+
+
+@command_router.message(Command('clear'))
+async def clear_user(message: Message, command: CommandObject, bot: Bot):
+    if command.args:
+        if command.args.isdigit():
+            print(f'Удаление {command.args}')
+            await destruction_of_the_user(message.from_user.id, int(command.args))
+    else:
+        await bot.send_message(
+            chat_id=config.ADMIN_TG_ID,
+            text=f'Обновить пользователя {message.from_user.id}',
+            reply_markup=ikb_confirm_user_clear(message.from_user.id),
         )
 
 

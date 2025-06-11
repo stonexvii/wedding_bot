@@ -1,7 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from classes.classes import Question
-from .callback_data import QuestionCB
+from .callback_data import QuestionCB, ResetConfirm
 
 text_buttons = [
     'A',
@@ -23,4 +23,16 @@ def ikb_answers(question: Question):
             ),
         )
     keyboard.adjust(4)
+    return keyboard.as_markup()
+
+
+def ikb_confirm_user_clear(user_tg_id: int):
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(
+        text='Сбросить',
+        callback_data=ResetConfirm(
+            button='confirm',
+            user_id=user_tg_id,
+        )
+    )
     return keyboard.as_markup()

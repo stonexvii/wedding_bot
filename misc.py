@@ -7,11 +7,11 @@ def now_timestamp():
 
 
 def on_start():
-    print(f'\n\n\n\n\nBot is started at {now_timestamp()}!\n\n\n\n\n')
+    print('=' * 60 + f'\nBot is started at {now_timestamp()}!\n' + '=' * 60)
 
 
 def on_shutdown():
-    print(f'\n\n\n\n\nBot is shutdown at {now_timestamp()}...\n\n\n\n\n')
+    print('=' * 60 + f'\nBot is shutdown at {now_timestamp()}...\n' + '=' * 60)
 
 
 def save_message(path: str, message: str):
@@ -22,6 +22,3 @@ def save_message(path: str, message: str):
 def load_message(path: str) -> str:
     with open(path + '.txt', 'r', encoding='UTF-8') as file:
         return file.read()
-
-
-print(now_timestamp())
