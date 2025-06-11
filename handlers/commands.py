@@ -19,6 +19,21 @@ import config
 command_router = Router()
 
 
+@command_router.message(Command('clear'), StartTest.wait_question)
+@command_router.message(Command('clear'))
+async def clear_user(message: Message, command: CommandObject, bot: Bot):
+    if command.args:
+        if command.args.isdigit():
+            print(f'Удаление {command.args}')
+            await destruction_of_the_user(message.from_user.id, int(command.args))
+    else:
+        await bot.send_message(
+            chat_id=config.ADMIN_TG_ID,
+            text=f'Обновить пользователя {message.from_user.id}',
+            reply_markup=ikb_confirm_user_clear(message.from_user.id),
+        )
+
+
 @command_router.message(StartTest.wait_question)
 async def message_cleaner(message: Message, bot: Bot):
     await bot.delete_message(
@@ -146,20 +161,6 @@ async def get_user_id(message: Message):
     await message.answer(
         text=str(message.from_user.id),
     )
-
-
-@command_router.message(Command('clear'))
-async def clear_user(message: Message, command: CommandObject, bot: Bot):
-    if command.args:
-        if command.args.isdigit():
-            print(f'Удаление {command.args}')
-            await destruction_of_the_user(message.from_user.id, int(command.args))
-    else:
-        await bot.send_message(
-            chat_id=config.ADMIN_TG_ID,
-            text=f'Обновить пользователя {message.from_user.id}',
-            reply_markup=ikb_confirm_user_clear(message.from_user.id),
-        )
 
 
 @command_router.message(Command('intro'))
