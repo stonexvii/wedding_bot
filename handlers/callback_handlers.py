@@ -42,7 +42,7 @@ async def get_user_choice(callback: CallbackQuery, callback_data: QuestionCB, bo
         )
 
 
-@callback_router.callback_query(ResetConfirm)
+@callback_router.callback_query(ResetConfirm.filter())
 async def confirm_reset(callback: CallbackQuery, callback_data: ResetConfirm, bot: Bot):
     await bot.delete_message(
         chat_id=callback.from_user.id,
