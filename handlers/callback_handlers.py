@@ -45,6 +45,10 @@ async def get_user_choice(callback: CallbackQuery, callback_data: QuestionCB, bo
 @callback_router.callback_query(ResetConfirm.filter(F.button == 'confirm'))
 async def confirm_reset(callback: CallbackQuery, callback_data: ResetConfirm, bot: Bot):
     await destruction_of_the_user(callback.from_user.id, callback_data.user_id)
+    await callback.answer(
+        text=f'Пользователь {callback_data.user_id} сброшен!',
+        show_alert=True,
+    )
     await bot.send_message(
         chat_id=callback_data.user_id,
         text=f'Твои ответы сброшены!\nИспользуй команду /start и проходи тест заново!',
