@@ -21,7 +21,7 @@ command_router = Router()
 
 @command_router.message(Command('clear'), StartTest.wait_question)
 @command_router.message(Command('clear'))
-async def clear_user(message: Message, command: CommandObject, bot: Bot):
+async def clear_user(message: Message, command: CommandObject, state: FSMContext, bot: Bot):
     if command.args:
         if command.args.isdigit():
             print(f'Удаление {command.args}')
@@ -32,6 +32,7 @@ async def clear_user(message: Message, command: CommandObject, bot: Bot):
             text=f'Обновить пользователя {message.from_user.id}',
             reply_markup=ikb_confirm_user_clear(message.from_user.id),
         )
+        await state.clear()
 
 
 @command_router.message(StartTest.wait_question)
