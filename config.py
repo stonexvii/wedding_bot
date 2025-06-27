@@ -13,4 +13,6 @@ DB_NAME = os.getenv('DB_NAME')
 DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 
+YADISK_TOKEN = os.getenv('YADISK_TOKEN')
+
 FILE_NAME_STATIC = 'wedding_static.xlsx'

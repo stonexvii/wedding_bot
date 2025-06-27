@@ -1,7 +1,11 @@
 from aiogram.types import Message
+import yadisk
+
+import config
 
 from database.tables import QuestionsTable, AnswersTable
 from database.requests import get_question, get_user, user_next_question_id
+from .enums_classes import Extensions
 
 
 class Answer:
@@ -58,3 +62,28 @@ class User:
 
     def __str__(self):
         return f'{self.tg_id} ({self.username})'
+
+
+class YaDisk:
+    instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls.instance is None:
+            cls.instance = super().__new__(cls)
+        return cls.instance
+
+    def __init__(self):
+        self.client = yadisk.AsyncClient(token=config.YADISK_TOKEN)
+        self.work_dir = '/wedding_30_06_25/guest_media'
+        self.file_name_pattern = '{user}_{number}.{ext}'
+
+    def _file_name(self, message: Message, file_extension: Extensions):
+        full_path = self.work_dir + '/' + self.file_name_pattern.format(user=message.from_user.id,
+                                                                        number=message.message_id,
+                                                                        ext=file_extension.value)
+        return full_path
+
+    async def upload(self, file, file_extension: Extensions, message: Message):
+        file_name = self._file_name(message, file_extension)
+        async with self.client:
+            await self.client.upload(file, file_name, timeout=300, retry_interval=30, n_retries=10)
