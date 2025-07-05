@@ -1,7 +1,7 @@
 import dotenv
 import os
 
-dotenv.load_dotenv('.env')
+# dotenv.load_dotenv('.env')
 
 ADMIN_TG_ID = int(os.getenv('ADMIN_TG_ID'))
 ADMIN_EMAIL = os.getenv('EMAIL_ADDRESS')

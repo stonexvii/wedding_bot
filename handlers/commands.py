@@ -19,6 +19,17 @@ import config
 command_router = Router()
 
 
+@command_router.message(Command('sending'))
+async def command_sending(message: Message, bot: Bot):
+    if message.from_user.id == config.ADMIN_TG_ID:
+        users_list = await all_users()
+        for user_id in users_list:
+            await bot.send_message(
+                chat_id=user_id.id,
+                text=message.text.split(' ', 1)[-1],
+            )
+
+
 @command_router.message(Command('clear'), StartTest.wait_question)
 @command_router.message(Command('clear'))
 async def clear_user(message: Message, command: CommandObject, state: FSMContext, bot: Bot):
@@ -172,10 +183,3 @@ async def intro_message(message: Message, command: CommandObject):
 @command_router.message(Command('outro'))
 async def intro_message(message: Message, command: CommandObject):
     misc.save_message('outro', command.args)
-
-
-@command_router.message(Command('test'))
-async def intro_message(message: Message, command: CommandObject):
-    await message.answer(
-        text='WORK!',
-    )

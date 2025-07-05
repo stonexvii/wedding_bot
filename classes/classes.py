@@ -2,10 +2,9 @@ from aiogram.types import Message
 import yadisk
 
 import config
-
 from database.tables import QuestionsTable, AnswersTable
 from database.requests import get_question, get_user, user_next_question_id
-from .enums_classes import Extensions
+from .enums_classes import Extensions, BotPaths
 
 
 class Answer:
@@ -65,6 +64,7 @@ class User:
 
 
 class YaDisk:
+    separator = '/'
     instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -74,16 +74,23 @@ class YaDisk:
 
     def __init__(self):
         self.client = yadisk.AsyncClient(token=config.YADISK_TOKEN)
-        self.work_dir = '/wedding_30_06_25/guest_media'
-        self.file_name_pattern = '{user}_{number}.{ext}'
+        self.work_dir = self._join_path(BotPaths.ROOT_DIR.value, BotPaths.GUEST_DIR.value)
+
+    @staticmethod
+    def _join_path(*args):
+        joined_path = YaDisk.separator.join(args)
+        if not joined_path.startswith(YaDisk.separator):
+            joined_path = YaDisk.separator + joined_path
+        return joined_path
 
     def _file_name(self, message: Message, file_extension: Extensions):
-        full_path = self.work_dir + '/' + self.file_name_pattern.format(user=message.from_user.id,
-                                                                        number=message.message_id,
-                                                                        ext=file_extension.value)
+        new_file_name = BotPaths.FILE_NAME.value.format(user=message.from_user.id,
+                                                        number=message.message_id,
+                                                        ext=file_extension.value)
+        full_path = self._join_path(self.work_dir, new_file_name)
         return full_path
 
     async def upload(self, file, file_extension: Extensions, message: Message):
-        file_name = self._file_name(message, file_extension)
+        file_path = self._file_name(message, file_extension)
         async with self.client:
-            await self.client.upload(file, file_name, timeout=300, retry_interval=30, n_retries=10)
+            await self.client.upload(file, file_path, timeout=300, retry_interval=30, n_retries=10)
